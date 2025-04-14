@@ -1,138 +1,151 @@
-# Multi-source Financial Data Analytics Platform
+# Market Data API
 
-A real-time financial data analytics platform that collects data from multiple sources (Binance and Finnhub), processes it through Kafka, and provides analytics via a FastAPI backend.
+A comprehensive market data API service that provides real-time and historical market data for cryptocurrencies and stocks, with advanced analytics and alerting capabilities.
 
 ## Features
 
-- Real-time data collection from:
-  - Binance WebSocket (Crypto data)
-  - Finnhub WebSocket (Stock data)
-- Data processing with Apache Kafka
-- Analytics:
-  - Moving averages
-  - OHLC (Open, High, Low, Close) calculations
-  - Volume spike detection
-- PostgreSQL storage for raw and processed data
-- FastAPI backend with REST and WebSocket endpoints
+- **Real-time Market Data**: Live price data for cryptocurrencies and stocks
+- **Historical Data**: Access to historical OHLCV data with various timeframes
+- **Technical Analytics**: Built-in technical indicators (RSI, MACD, Bollinger Bands)
+- **Custom Alerts**: Create and manage price and technical indicator alerts
+- **Multiple Data Sources**: Integration with Binance (crypto) and Yahoo Finance (stocks)
+- **RESTful API**: Clean, well-documented API endpoints
+- **Docker Support**: Easy deployment with Docker and Docker Compose
 
 ## Prerequisites
 
-- Python 3.8+
-- Apache Kafka
-- PostgreSQL
-- Finnhub API Key (get it from https://finnhub.io)
+- Docker
+- Docker Compose
+- Git
 
-## Installation
+## Quick Start
 
 1. Clone the repository:
-```bash
-git clone <repository-url>
-cd <repository-name>
-```
+   ```bash
+   git clone <repository-url>
+   cd <repository-name>
+   ```
 
-2. Create a virtual environment and activate it:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
+2. Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
 
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+3. Start the services:
+   ```bash
+   docker-compose up -d
+   ```
 
-4. Set up environment variables:
-- Copy `.env.example` to `.env`
-- Fill in your configuration values:
-  - Kafka bootstrap servers
-  - PostgreSQL credentials
-  - Finnhub API key
+4. Test the API:
+   ```bash
+   ./test_api.sh
+   ```
 
-## Running the Application
+## Docker Architecture
 
-1. Start Kafka and PostgreSQL:
-```bash
-# Make sure Kafka and PostgreSQL are running on your system
-```
+The project uses Docker Compose to orchestrate multiple services:
 
-2. Start the Binance producer:
-```bash
-python -m src.producers.binance
-```
-
-3. Start the Finnhub producer:
-```bash
-python -m src.producers.finnhub
-```
-
-4. Start the Kafka consumer:
-```bash
-python -m src.consumers.market_data_consumer
-```
-
-5. Start the FastAPI backend:
-```bash
-uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
-```
+- **API Service**: FastAPI-based REST API
+- **Market Data Consumer**: Kafka consumer for processing market data
+- **PostgreSQL**: Database for storing market data and alerts
+- **Kafka**: Message broker for real-time data processing
+- **Zookeeper**: Required for Kafka operation
 
 ## API Endpoints
 
-### REST Endpoints
+### Market Data
 
-- `GET /latest-data?symbol=BTCUSDT&limit=100`
-  - Get latest market data for a symbol
-  - Optional query parameters:
-    - `limit`: Number of records to return (default: 100, max: 1000)
+- `GET /api/v1/market-data`: Get market data with filtering options
+  - Parameters: `symbol`, `timeframe`, `start_time`, `end_time`, `limit`, `aggregate`
 
-- `GET /ohlc?symbol=BTCUSDT&timeframe=1min`
-  - Get OHLC (candlestick) data
-  - Optional query parameters:
-    - `timeframe`: Time period (e.g., "1min", "5min", "1hour")
-    - `start_time`: ISO format datetime
-    - `end_time`: ISO format datetime
-    - `limit`: Number of candles to return
+### Analytics
 
-- `GET /alerts?symbol=BTCUSDT&alert_type=VOLUME_SPIKE`
-  - Get market alerts
-  - Optional query parameters:
-    - `symbol`: Filter by symbol
-    - `alert_type`: Filter by alert type
-    - `limit`: Number of alerts to return
+- `GET /api/v1/analytics`: Get technical indicators
+  - Parameters: `symbol`, `indicators`, `timeframe`, `start_time`, `end_time`
 
-### WebSocket Endpoint
+### Alerts
 
-- `ws://localhost:8000/ws/market-data/{symbol}`
-  - Real-time market data updates
-  - Replace `{symbol}` with the desired symbol (e.g., "BTCUSDT", "AAPL")
+- `GET /api/v1/alerts`: Get alerts
+  - Parameters: `symbol`, `status`, `limit`
+- `POST /api/v1/alerts`: Create a new alert
+  - Body: `symbol`, `type`, `value`, `timeframe`, `notification_channels`
 
-## Project Structure
+### Symbols
+
+- `GET /api/v1/symbols`: Get available symbols
+  - Parameters: `source`, `type`
+
+### Timeframes
+
+- `GET /api/v1/timeframes`: Get available timeframes
+
+## Environment Variables
+
+Create a `.env` file with the following variables:
 
 ```
-.
-├── requirements.txt
-├── .env
-└── src/
-    ├── producers/
-    │   ├── binance.py
-    │   └── finnhub.py
-    ├── consumers/
-    │   └── market_data_consumer.py
-    ├── models/
-    │   ├── base.py
-    │   └── market_data.py
-    ├── analytics/
-    │   └── processor.py
-    └── api/
-        └── main.py
+# API Configuration
+API_HOST=0.0.0.0
+API_PORT=8000
+API_WORKERS=4
+API_RELOAD=true
+
+# Database Configuration
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=market_data
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+
+# Kafka Configuration
+KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+KAFKA_TOPIC_MARKET_DATA=market_data
+KAFKA_GROUP_ID=market_data_consumer
+
+# Zookeeper Configuration
+ZOOKEEPER_HOST=zookeeper
+ZOOKEEPER_PORT=2181
+
+# Market Data Sources
+BINANCE_API_KEY=your_binance_api_key
+BINANCE_API_SECRET=your_binance_api_secret
+YAHOO_API_KEY=your_yahoo_api_key
 ```
+
+## Development
+
+1. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. Run the API locally:
+   ```bash
+   uvicorn src.api.main:app --reload
+   ```
+
+3. Run tests:
+   ```bash
+   pytest
+   ```
+
+## Testing the API
+
+Use the provided `test_api.sh` script to test the API endpoints:
+
+```bash
+./test_api.sh
+```
+
+The script provides an interactive menu to test different endpoints and features.
 
 ## Contributing
 
 1. Fork the repository
-2. Create your feature branch
+2. Create a feature branch
 3. Commit your changes
 4. Push to the branch
-5. Create a new Pull Request
+5. Create a Pull Request
 
 ## License
 
