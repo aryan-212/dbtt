@@ -1,0 +1,370 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Market Data API",
+    "description": "API for accessing real-time and historical market data",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/api/v1/market-data": {
+      "get": {
+        "summary": "Get market data",
+        "description": "Retrieve market data with optional filtering",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "query",
+            "description": "Trading symbol (e.g., BTCUSDT, AAPL)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "timeframe",
+            "in": "query",
+            "description": "Time interval (e.g., 1m, 5m, 1h)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["1m", "5m", "15m", "30m", "1h", "4h", "1d"]
+            }
+          },
+          {
+            "name": "start_time",
+            "in": "query",
+            "description": "Start time in ISO format (e.g., 2025-04-14T15:50:00Z)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end_time",
+            "in": "query",
+            "description": "End time in ISO format (e.g., 2025-04-14T16:00:00Z)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of records to return",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "maximum": 1000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MarketData"
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "description": "Total number of records"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error message"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/symbols": {
+      "get": {
+        "summary": "Get available symbols",
+        "description": "Retrieve list of available trading symbols",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/timeframes": {
+      "get": {
+        "summary": "Get available timeframes",
+        "description": "Retrieve list of available time intervals",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": ["1m", "5m", "15m", "30m", "1h", "4h", "1d"]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/latest-data": {
+      "get": {
+        "summary": "Get latest market data (Legacy)",
+        "description": "Retrieve latest market data for a symbol",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "query",
+            "description": "Trading symbol",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of records to return",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MarketData"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ohlc": {
+      "get": {
+        "summary": "Get OHLC data (Legacy)",
+        "description": "Retrieve OHLC (Open, High, Low, Close) data",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "query",
+            "description": "Trading symbol",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "timeframe",
+            "in": "query",
+            "description": "Time interval (e.g., 1min, 5min)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of records to return",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MarketData"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alerts": {
+      "get": {
+        "summary": "Get alerts (Legacy)",
+        "description": "Retrieve market alerts",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "query",
+            "description": "Trading symbol",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of records to return",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Alert"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "MarketData": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading symbol"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of the data point"
+          },
+          "open": {
+            "type": "number",
+            "format": "float",
+            "description": "Opening price"
+          },
+          "high": {
+            "type": "number",
+            "format": "float",
+            "description": "Highest price"
+          },
+          "low": {
+            "type": "number",
+            "format": "float",
+            "description": "Lowest price"
+          },
+          "close": {
+            "type": "number",
+            "format": "float",
+            "description": "Closing price"
+          },
+          "volume": {
+            "type": "number",
+            "format": "float",
+            "description": "Trading volume"
+          },
+          "source": {
+            "type": "string",
+            "description": "Data source (e.g., binance)",
+            "enum": ["binance", "yahoo"]
+          }
+        },
+        "required": ["symbol", "timestamp", "open", "high", "low", "close", "volume", "source"]
+      },
+      "Alert": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading symbol"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Alert timestamp"
+          },
+          "type": {
+            "type": "string",
+            "description": "Alert type",
+            "enum": ["price_above", "price_below", "volume_above", "volume_below"]
+          },
+          "value": {
+            "type": "number",
+            "format": "float",
+            "description": "Alert threshold value"
+          },
+          "message": {
+            "type": "string",
+            "description": "Alert message"
+          }
+        },
+        "required": ["symbol", "timestamp", "type", "value", "message"]
+      }
+    }
+  }
+} 
